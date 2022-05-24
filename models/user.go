@@ -2,7 +2,7 @@ package models
 
 import "github.com/jinzhu/gorm"
 
-var User struct {
+type User struct {
 	gorm.Model
 
 	UID      uint64 `json:"uid" gorm:"primary_key;auto_increment;not_null"`

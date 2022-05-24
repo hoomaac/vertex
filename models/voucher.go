@@ -2,7 +2,7 @@ package models
 
 import "github.com/jinzhu/gorm"
 
-var Voucher struct {
+type Voucher struct {
 	gorm.Model
 
 	VID  uint64 `json:"vid" gorm:"primary_key;auto_increment;not_null"`
