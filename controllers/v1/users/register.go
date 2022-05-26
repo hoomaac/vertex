@@ -1,19 +1,12 @@
-package auth
+package user
 
 import (
-
 	"github.com/gin-gonic/gin"
 	"github.com/hoomaac/vertex/common/vtypes"
 	"github.com/hoomaac/vertex/models"
 )
 
-func TellRoutes(group *gin.RouterGroup) {
-
-	group.Group("/auth").GET("/register", registerUser)
-	group.Group("/auth").POST("/login", loginUser)
-}
-
-func registerUser(ctx *gin.Context) {
+func Register(ctx *gin.Context) {
 
 	user := models.User{}
 
@@ -27,8 +20,4 @@ func registerUser(ctx *gin.Context) {
 	code, resp := models.CreateUser(&user)
 
 	ctx.JSON(code, resp)
-}
-
-func loginUser(ctx *gin.Context) {
-
 }
