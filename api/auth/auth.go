@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hoomaac/vertex/common/vtypes"

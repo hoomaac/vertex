@@ -41,7 +41,7 @@ func CreateUser(user *User) (int, *vtypes.AuthResponse) {
 		return vtypes.BadRequest, &vtypes.AuthResponse{Status: vtypes.BadRequest, Data: "this username is already registered"}
 	}
 
-	token := jwt.GenerateJwt()
+	token := jwt.GenerateJwt(newUser.UserName, newUser.Name)
 
 	return vtypes.Ok, &vtypes.AuthResponse{Status: vtypes.Ok, Data: token}
 }
