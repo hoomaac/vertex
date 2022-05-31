@@ -27,6 +27,7 @@ func setupDb() {
 
 	// migrate each model here
 	common.Migrate(&models.User{})
+	common.Migrate(&models.Good{})
 }
 
 func main() {

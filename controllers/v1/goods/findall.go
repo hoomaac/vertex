@@ -9,7 +9,7 @@ import (
 )
 
 func FindAllGoods(ctx *gin.Context) {
-	var item []models.Goods
+	var item []models.Good
 
 	common.Db.Find(&item)
 

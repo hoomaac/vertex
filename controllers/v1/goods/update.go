@@ -9,7 +9,7 @@ import (
 )
 
 func UpdateGoods(ctx *gin.Context) {
-	var item models.Goods
+	var item models.Good
 
 	if err := common.Db.Where("GID = ?", ctx.Param("GID")).First(&item).Error; err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Not found!"})
@@ -17,7 +17,7 @@ func UpdateGoods(ctx *gin.Context) {
 	}
 
 	// Validate input
-	var updated_item models.Goods
+	var updated_item models.Good
 	if err := ctx.BindJSON(&updated_item); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return

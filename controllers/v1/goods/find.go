@@ -9,7 +9,7 @@ import (
 )
 
 func FindGoods(ctx *gin.Context) {
-	var item models.Goods
+	var item models.Good
 
 	if err := common.Db.Where("GID = ?", ctx.Param("GID")).First(&item).Error; err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Not found!"})
