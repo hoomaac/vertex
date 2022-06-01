@@ -4,44 +4,63 @@ import (
 	"errors"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/hoomaac/vertex/common"
-	"github.com/hoomaac/vertex/common/vtypes"
-	"github.com/hoomaac/vertex/middleware/jwt"
-	"github.com/jinzhu/gorm"
+	"github.com/hoomaac/vertex/pkg/app"
+	"github.com/hoomaac/vertex/pkg/database"
+	"gorm.io/gorm"
 )
 
 type User struct {
 	gorm.Model
 
 	UID      uint64 `json:"uid" gorm:"primary_key;auto_increment;not_null"`
-	Name     string `json:"name"`
+	Email    string `json:"email" gorm:"unique;"`
 	UserName string `json:"user_name" gorm:"unique;"`
 	RCode    string `gorm:"foreignKey:Referral" json:"r_code"`
+	Verified bool   `json:"verified"`
 }
 
-func CreateUser(user *User) (int, *vtypes.AuthResponse) {
+func CreateUser(registerReg *app.RegisterRequest) *User {
 
-	db := common.Db
+	db := database.Db
 
 	var mySqlErr *mysql.MySQLError
 
-	if len(user.UserName) == 0 || len(user.Name) == 0 {
-		return vtypes.BadRequest, &vtypes.AuthResponse{Status: vtypes.BadRequest, Data: "username or name is empty"}
+	if len(registerReg.Username) == 0 || len(registerReg.Email) == 0 {
+		return nil
 	}
 
 	newUser := &User{
-		Name:     user.Name,
-		UserName: user.UserName,
-		RCode:    user.RCode,
+		Email:    registerReg.Email,
+		UserName: registerReg.Username,
 	}
 
 	trx := db.Create(newUser)
 
-	if errors.As(trx.Error, &mySqlErr) &&  mySqlErr.Number == common.DuplicateMysqlErr{
-		return vtypes.BadRequest, &vtypes.AuthResponse{Status: vtypes.BadRequest, Data: "this username is already registered"}
+	if errors.As(trx.Error, &mySqlErr) && mySqlErr.Number == database.DuplicateMysqlErr {
+		return nil
 	}
 
-	token := jwt.GenerateJwt(newUser.UserName, newUser.Name)
+	return newUser
+}
 
-	return vtypes.Ok, &vtypes.AuthResponse{Status: vtypes.Ok, Data: token}
+func FindUserByUsername(username string) *User {
+
+	db := database.Db
+
+	var user User
+
+	db.Find(&user, "username = ?", username)
+
+	return &user
+}
+
+func FindUserByEmail(email string) *User {
+
+	db := database.Db
+
+	var user User
+
+	db.Find(&user, "email = ?", email)
+
+	return &user
 }

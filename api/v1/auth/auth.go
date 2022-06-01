@@ -9,4 +9,5 @@ func TellRoutes(group *gin.RouterGroup) {
 
 	group.Group("/auth").GET("/register", user.Register)
 	group.Group("/auth").POST("/login", user.Login)
+	group.Group("/auth").POST("/confirm", user.LoginConfirm)
 }

@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hoomaac/vertex/common"
 	"github.com/hoomaac/vertex/models"
+	"github.com/hoomaac/vertex/pkg/database"
 )
 
 func AddGoods(ctx *gin.Context) {
@@ -19,7 +19,7 @@ func AddGoods(ctx *gin.Context) {
 
 	new_item := models.Good{Name: input.Name}
 
-	common.Db.Create(&new_item)
+	database.Db.Create(&new_item)
 
 	ctx.JSON(http.StatusOK, gin.H{"message": new_item})
 }

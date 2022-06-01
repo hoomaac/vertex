@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hoomaac/vertex/middleware/jwt"
-	"github.com/hoomaac/vertex/middleware/otp"
+	"github.com/hoomaac/vertex/pkg/jwt"
+	"github.com/hoomaac/vertex/pkg/otp"
 	"github.com/joho/godotenv"
 )
 
