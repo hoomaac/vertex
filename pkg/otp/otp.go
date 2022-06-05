@@ -6,36 +6,35 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hoomaac/vertex/pkg/redis"
-	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 )
 
-const UnusedStrParam string = ""
-const UnusedIntParam int = 0
+// Redis OtpTimeout
+const OtpTimeout = 30 * 1000 * 1000 * 1000
 
 func getTimeout() int {
 
-	timeout := os.Getenv("OTP_TIMEOUT")
+	strTimeout := os.Getenv("OTP_TIMEOUT")
 
-	if timeout == "" {
+	if strTimeout == "" {
 		log.Println("OTP_TIMEOUT is not set. Default timeout, which is 30s, will be used")
-		timeout = "30"
+		return OtpTimeout
 	}
 
-	otpTimeout, err := strconv.Atoi(timeout)
+	timeout, err := strconv.Atoi(strTimeout)
 
 	if err != nil {
 		log.Printf("converting otp timeout failed, %v\n", err)
 		return 0
 	}
 
-	return otpTimeout
+	return timeout
 }
 
+// Returns base32 encoded secret
 func getSecret() string {
 
 	secret := os.Getenv("OTP_SECRET")
@@ -44,50 +43,61 @@ func getSecret() string {
 		log.Fatalln("OTP_SECRET is empty")
 	}
 
-	return secret
+	secret += "low"
+
+	return base32.StdEncoding.EncodeToString([]byte(secret))
 }
 
-func GenerateOtp(algorithm string) string {
+func generateKey(email string) string {
 
-	var algo otp.Algorithm
-	var err error
+	key, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "vertex",
+		AccountName: email,
+	})
 
-	secret := getSecret()
-	encodedSecret := base32.StdEncoding.EncodeToString([]byte(secret))
-
-	if algorithm == UnusedStrParam {
-		log.Println("OTP_ALGORITHM is not set. Default algorithm is used, SHA256")
-		algorithm = "sha256"
-	}
-
-	switch strings.ToLower(algorithm) {
-	case "sha256":
-		algo = otp.AlgorithmSHA256
-	case "sha512":
-		algo = otp.AlgorithmSHA512
-	}
-
-	otpTimeout := getTimeout()
-
-	if otpTimeout == 0 {
+	if err != nil {
+		log.Printf("generating key for email: %s has been failed due to err: %v\n", email, err)
 		return ""
 	}
 
-	passcode, err := totp.GenerateCodeCustom(encodedSecret, time.Now(),
-		totp.ValidateOpts{Period: uint(otpTimeout), Skew: 1, Digits: otp.DigitsSix, Algorithm: algo})
+	return key.Secret()
+}
+
+func GenerateOtp(email string) string {
+
+	var err error
+	secret := generateKey(email)
+
+	if secret == "" {
+		log.Println("secret key is empty")
+		return ""
+	}
+
+	passcode, err := totp.GenerateCode(secret, time.Now())
 
 	if err != nil {
 		log.Printf("Generating OTP failed, %v", err)
 		return ""
 	}
 
+	log.Printf("secret key is: %s\n", secret)
+
+	if !StoreSecretOnRedis(secret, email, getTimeout()) {
+		log.Printf("Storing OTP secret on redis failed, %v\n", err)
+		return ""
+	}
+
 	return passcode
 }
 
-func ValidateOtp(passcode string, secret string) bool {
+func ValidateOtp(passcode string, email string) bool {
 
-	if secret == UnusedStrParam {
-		secret = getSecret()
+	secret := GetSecretFromRedis(email)
+
+	log.Printf("value from redis: %s\n", secret)
+
+	if secret == "" {
+		return false
 	}
 
 	return totp.Validate(passcode, secret)
@@ -95,18 +105,15 @@ func ValidateOtp(passcode string, secret string) bool {
 
 // Store value on RedisClient with this format:
 // passcode@<username>, <username> should be replaced with any valid username
-func StorePasscodeOnRedis(passcode string, username string, timeout int) bool {
+func StoreSecretOnRedis(secretKey string, email string, timeout int) bool {
 
-	if timeout == UnusedIntParam {
-		timeout = getTimeout()
-		if timeout == 0 {
-			return false
-		}
+	if timeout == 0 {
+		timeout = 30 * 100
 	}
 
-	return redis.SetValue(fmt.Sprintf("passcode@%s", username), passcode, time.Duration(timeout))
+	return redis.SetValue(fmt.Sprintf("otp:%s", email), secretKey, timeout)
 }
 
-func GetPasscodeFromRedis(username string) string {
-	return redis.GetValue(username)
+func GetSecretFromRedis(email string) string {
+	return redis.GetValue(fmt.Sprintf("otp:%s", email))
 }

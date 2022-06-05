@@ -1,15 +1,15 @@
 package app
 
 type LoginRequest struct {
-	Email string
+	Email string `json:"email"`
 }
 
 type LoginConfirmRequest struct {
-	Email string
-	Code  string // OTP code
+	Email string `json:"email"`
+	Code  string `json:"code"` // OTP code
 }
 
 type RegisterRequest struct {
-	Username string
-	Email    string
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }

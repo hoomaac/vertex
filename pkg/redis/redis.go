@@ -37,9 +37,9 @@ func InitRedis(RedisConf *config.RedisConfig) {
 	})
 }
 
-func SetValue(key string, value interface{}, timeout time.Duration) bool {
+func SetValue(key string, value interface{}, timeout int) bool {
 
-	err := RedisClient.Set(ctx, key, value, timeout).Err()
+	_, err := RedisClient.Set(ctx, key, value, time.Duration(timeout)).Result()
 
 	if err != nil {
 		log.Printf("set key=%s, value=%v to redis failed due to %v", key, value, err)

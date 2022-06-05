@@ -1,12 +1,12 @@
 package user
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hoomaac/vertex/models"
 	"github.com/hoomaac/vertex/pkg/app"
+	"github.com/hoomaac/vertex/pkg/jwt"
 	"github.com/hoomaac/vertex/pkg/otp"
 )
 
@@ -27,11 +27,7 @@ func Login(ctx *gin.Context) {
 
 	// TODO: check for null parameters
 
-	passcode := otp.GenerateOtp(otp.UnusedStrParam)
-
-	if !otp.StorePasscodeOnRedis(passcode, user.UserName, otp.UnusedIntParam) {
-		log.Printf("store otp on redis has been failed, username:%s\n", user.UserName)
-	}
+	passcode := otp.GenerateOtp(user.Email)
 
 	// TODO: send passcode to email
 
@@ -46,17 +42,45 @@ func LoginConfirm(ctx *gin.Context) {
 
 	ctx.ShouldBindJSON(&loginConfirmReq)
 
-	passcode := loginConfirmReq.Code
-	storedPasscode := otp.GetPasscodeFromRedis(loginConfirmReq.Email)
+	user := models.FindUserByEmail(loginConfirmReq.Email)
 
-	if passcode == "" || !otp.ValidateOtp(passcode, otp.UnusedStrParam) || passcode != storedPasscode {
+	// If user is already veritifed, do not continue the login confirm process
+	if user.Verified {
+		ctx.JSON(http.StatusBadRequest, app.LoginConfirmResponse{
+			Response: app.GeneralResponse{Status: http.StatusBadRequest, Message: app.UserAlreadyConfirm},
+		})
+		return
+	}
+
+	if loginConfirmReq.Code == "" || loginConfirmReq.Email == "" || !otp.ValidateOtp(loginConfirmReq.Code, loginConfirmReq.Email) {
 		ctx.JSON(http.StatusBadRequest, app.LoginConfirmResponse{
 			Response: app.GeneralResponse{Status: http.StatusBadRequest, Message: app.OtpIsNotValid},
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusBadRequest, app.LoginResponse{
-		Response: app.GeneralResponse{Status: http.StatusOK},
+	if user == nil {
+		ctx.JSON(http.StatusBadRequest, app.LoginConfirmResponse{
+			Response: app.GeneralResponse{Status: http.StatusBadRequest, Message: app.UserNotFound},
+		})
+		return
+	}
+
+	// Update the user
+	user.Verified = true
+
+	if !models.UpdateUser(user) {
+		if user == nil {
+			ctx.JSON(http.StatusBadRequest, app.LoginConfirmResponse{
+				Response: app.GeneralResponse{Status: http.StatusBadRequest, Message: app.UserConfirmFailed},
+			})
+			return
+		}
+	}
+
+	token := jwt.GenerateJwt(user.UserName, user.Email)
+
+	ctx.JSON(http.StatusOK, app.LoginConfirmResponse{
+		Response: app.GeneralResponse{Status: http.StatusOK, Message: app.UserConfirmSuccess}, Token: token,
 	})
 }

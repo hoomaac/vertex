@@ -3,6 +3,7 @@ package jwt
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -14,6 +15,7 @@ func GenerateJwt(username string, email string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
 		"email":    email,
+		"IssuedAt": time.Now().Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(secretKey))

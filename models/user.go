@@ -64,3 +64,18 @@ func FindUserByEmail(email string) *User {
 
 	return &user
 }
+
+func UpdateUser(user *User) bool {
+
+	db := database.Db
+
+	
+
+	err := db.Model(user).Update("verified", true).Error
+
+	if err != nil {
+		return false
+	}
+
+	return true
+}
