@@ -15,7 +15,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func setupDb() {
+func init() {
+
+	env := godotenv.Load()
+
+	if env != nil {
+		log.Fatal("could not read env file")
+	}
 
 	dbInfo := &config.DataBaseConfig{
 		Username: os.Getenv("DB_USERNAME"),
@@ -52,16 +58,8 @@ func main() {
 	// Start the engine and read configs from .env file
 	engine := api.StartEngine(gin.DebugMode)
 
-	env := godotenv.Load()
-
-	if env != nil {
-		log.Fatal("could not read env file")
-	}
-
 	port := os.Getenv("VERTEX_PORT")
 	addr := os.Getenv("VERTEX_ADDR")
-
-	setupDb()
 
 	engine.Run(fmt.Sprintf("%s:%s", addr, port))
 }

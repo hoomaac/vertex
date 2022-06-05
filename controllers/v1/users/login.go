@@ -25,9 +25,14 @@ func Login(ctx *gin.Context) {
 		return
 	}
 
-	// TODO: check for null parameters
-
 	passcode := otp.GenerateOtp(user.Email)
+
+	if passcode == "" {
+		ctx.JSON(http.StatusInternalServerError, app.LoginResponse{
+			Response: app.GeneralResponse{Status: http.StatusInternalServerError, Message: app.InternalGenericError},
+		})
+		return
+	}
 
 	// TODO: send passcode to email
 
