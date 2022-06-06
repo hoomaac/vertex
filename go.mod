@@ -25,6 +25,6 @@ require (
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
-	gorm.io/driver/mysql v1.3.3 // indirect
+	gorm.io/driver/mysql v1.3.4 // indirect
 	gorm.io/gorm v1.23.5 // indirect
 )

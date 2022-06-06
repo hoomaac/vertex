@@ -37,7 +37,7 @@ func CreateUser(user *User) (int, *vtypes.AuthResponse) {
 
 	trx := db.Create(newUser)
 
-	if errors.As(trx.Error, &mySqlErr) &&  mySqlErr.Number == common.DuplicateMysqlErr{
+	if errors.As(trx.Error, &mySqlErr) && mySqlErr.Number == common.DuplicateMysqlErr {
 		return vtypes.BadRequest, &vtypes.AuthResponse{Status: vtypes.BadRequest, Data: "this username is already registered"}
 	}
 
