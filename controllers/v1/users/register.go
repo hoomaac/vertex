@@ -1,23 +1,37 @@
 package user
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
-	"github.com/hoomaac/vertex/common/vtypes"
 	"github.com/hoomaac/vertex/models"
+	"github.com/hoomaac/vertex/pkg/app"
 )
 
 func Register(ctx *gin.Context) {
 
-	user := models.User{}
+	var registerReq app.RegisterRequest
 
-	err := ctx.ShouldBindJSON(&user)
+	err := ctx.ShouldBindJSON(&registerReq)
 
 	if err != nil {
-		ctx.JSON(vtypes.BadRequest, vtypes.AuthResponse{Status: vtypes.BadRequest, Data: err.Error()})
+		ctx.JSON(http.StatusBadRequest, app.RegisterResponse{
+			Reponse: app.GeneralResponse{Status: http.StatusBadRequest, Message: app.UserRegisteredNotOk},
+		})
 		return
 	}
 
-	code, resp := models.CreateUser(&user)
+	newUser := models.CreateUser(&registerReq)
 
-	ctx.JSON(code, resp)
+	if newUser == nil {
+		ctx.JSON(http.StatusBadRequest, app.RegisterResponse{
+			Reponse: app.GeneralResponse{Status: http.StatusBadRequest, Message: app.UserRegisteredNotOk},
+		})
+		return
+	}
+
+	// TODO: send verification email
+	ctx.JSON(http.StatusOK, app.RegisterResponse{
+		Reponse: app.GeneralResponse{Status: http.StatusOK, Message: app.UserRegisteredOk},
+	})
 }

@@ -4,14 +4,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hoomaac/vertex/common"
+	"github.com/hoomaac/vertex/pkg/database"
 	"github.com/hoomaac/vertex/models"
 )
 
 func UpdateGoods(ctx *gin.Context) {
 	var item models.Good
 
-	if err := common.Db.Where("GID = ?", ctx.Param("GID")).First(&item).Error; err != nil {
+	if err := database.Db.Where("GID = ?", ctx.Param("GID")).First(&item).Error; err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Not found!"})
 		return
 	}
@@ -23,7 +23,7 @@ func UpdateGoods(ctx *gin.Context) {
 		return
 	}
 
-	common.Db.Model(&item).Updates(updated_item)
+	database.Db.Model(&item).Updates(updated_item)
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Updated"})
 }
